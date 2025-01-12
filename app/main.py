@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException
 import httpx
 import os
 from dotenv import load_dotenv
+from sqlmodel import SQLModel, create_engine
+from models import Asset, ExchangeRate, AssetPrice
 
 load_dotenv()
 
@@ -12,6 +14,15 @@ GOLD_API_KEY = os.getenv("GOLD_API_KEY")
 USD_API_URL = os.getenv("USD_API_URL")
 BITCOIN_API_URL = os.getenv("BITCOIN_API_URL")
 BITCOIN_API_KEY = os.getenv("BITCOIN_API_KEY")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_engine(DATABASE_URL, echo=True)
+
+
+# Init database
+@app.on_event("startup")
+def on_startup():
+    SQLModel.metadata.create_all(engine)
 
 
 @app.get("/")
