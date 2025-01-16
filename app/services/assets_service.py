@@ -1,6 +1,6 @@
 from fastapi import status, HTTPException
 import httpx
-from datetime import datetime
+from datetime import datetime, timedelta
 from config import (
     GOLD_API_KEY,
     BITCOIN_API_KEY,
@@ -70,6 +70,7 @@ async def create_bitcoin_price(session: Session):
             last_updated = data["data"]["BTC"]["quote"]["USD"]["last_updated"]
 
             price_recorded_at = datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
+            price_recorded_at += timedelta(hours=7)
 
             prev_bitcoin_price = get_first_asset_price(2, session)
             if (
