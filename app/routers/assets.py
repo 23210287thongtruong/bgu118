@@ -4,19 +4,52 @@ from typing import List
 from models import AssetPrice
 from db import get_session
 from services.assets_service import (
-    get_asset_prices as service_get_asset_prices,
+    get_gold_prices as service_get_gold_prices,
+    get_bitcoin_prices as service_get_bitcoin_prices,
+    get_latest_gold_price as service_get_latest_gold_price,
+    get_latest_bitcoin_price as service_get_latest_bitcoin_price,
     create_gold_price,
     create_bitcoin_price,
 )
+from datetime import datetime
 
 router = APIRouter()
 
 
 @router.get(
-    "/asset-prices", status_code=status.HTTP_200_OK, response_model=List[AssetPrice]
+    "/gold-prices", status_code=status.HTTP_200_OK, response_model=List[AssetPrice]
 )
-def get_asset_prices(asset_id: int, session: Session = Depends(get_session)):
-    return service_get_asset_prices(asset_id, session)
+def get_gold_prices(
+    session: Session = Depends(get_session),
+    start_date: datetime = None,
+    end_date: datetime = None,
+):
+    return service_get_gold_prices(session, start_date, end_date)
+
+
+@router.get(
+    "/gold-prices/latest", status_code=status.HTTP_200_OK, response_model=AssetPrice
+)
+def get_latest_gold_price(session: Session = Depends(get_session)):
+    return service_get_latest_gold_price(session)
+
+
+@router.get(
+    "/bitcoin-prices", status_code=status.HTTP_200_OK, response_model=List[AssetPrice]
+)
+def get_bitcoin_prices(
+    session: Session = Depends(get_session),
+    start_date: datetime = None,
+    end_date: datetime = None,
+):
+    return service_get_bitcoin_prices(session, start_date, end_date)
+
+
+@router.get(
+    "/bitcoin-prices/latest", status_code=status.HTTP_200_OK, response_model=AssetPrice
+)
+def get_latest_bitcoin_price(session: Session = Depends(get_session)):
+    return service_get_latest_bitcoin_price(session)
 
 
 @router.post("/assets-prices", status_code=status.HTTP_201_CREATED)

@@ -1,37 +1,100 @@
 import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AssetPrice, ExchangeRate } from "./interfaces";
+import { formatDate } from "./utils";
 
-const fetchAssetPrices = async (asset_id: number) => {
-  const { data } = await axios.get("/api/asset-prices", {
-    params: { asset_id },
+const fetchGoldPrices = async (start_date: Date, end_date: Date) => {
+  const start_date_formatted = formatDate(start_date);
+  const end_date_formatted = formatDate(end_date);
+  const { data } = await axios.get<AssetPrice[]>("/api/gold-prices", {
+    params: { start_date: start_date_formatted, end_date: end_date_formatted },
   });
   return data;
 };
 
-const fetchExchangeRates = async () => {
-  const { data } = await axios.get("/api/exchange-rates");
+const fetchLatestGoldPrice = async () => {
+  const { data } = await axios.get<AssetPrice>("/api/gold-prices/latest");
+  return data;
+};
+
+const fetchBitcoinPrices = async (start_date: Date, end_date: Date) => {
+  const start_date_formatted = formatDate(start_date);
+  const end_date_formatted = formatDate(end_date);
+  const { data } = await axios.get<AssetPrice[]>("/api/bitcoin-prices", {
+    params: { start_date: start_date_formatted, end_date: end_date_formatted },
+  });
+  return data;
+};
+
+const fetchLatestBitcoinPrice = async () => {
+  const { data } = await axios.get<AssetPrice>("/api/bitcoin-prices/latest");
+  return data;
+};
+
+const fetchExchangeRates = async (start_date: Date, end_date: Date) => {
+  const start_date_formatted = formatDate(start_date);
+  const end_date_formatted = formatDate(end_date);
+  const { data } = await axios.get<ExchangeRate[]>("/api/exchange-rates", {
+    params: { start_date: start_date_formatted, end_date: end_date_formatted },
+  });
+  return data;
+};
+
+const fetchLatestExchangeRate = async () => {
+  const { data } = await axios.get<ExchangeRate>("/api/exchange-rates/latest");
   return data;
 };
 
 const postAssetsPrices = async () => {
-  const { data } = await axios.post("/api/assets-prices");
+  const { data } = await axios.post<{ message: string }>("/api/assets-prices");
   return data;
 };
 
 const postExchangeRates = async () => {
-  const { data } = await axios.post("/api/exchange-rates");
+  const { data } = await axios.post<{ message: string }>("/api/exchange-rates");
   return data;
 };
 
-export const useAssetPrices = (asset_id: number) => {
+export const useGoldPrices = (start_date: Date, end_date: Date) => {
   return useQuery({
-    queryKey: ["assetPrices", asset_id],
-    queryFn: () => fetchAssetPrices(asset_id),
+    queryKey: ["goldPrices", start_date, end_date],
+    queryFn: () => fetchGoldPrices(start_date, end_date),
   });
 };
 
-export const useExchangeRates = () => {
-  return useQuery({ queryKey: ["exchangeRates"], queryFn: fetchExchangeRates });
+export const useLatestGoldPrice = () => {
+  return useQuery({
+    queryKey: ["latestGoldPrice"],
+    queryFn: fetchLatestGoldPrice,
+  });
+};
+
+export const useBitcoinPrices = (start_date: Date, end_date: Date) => {
+  return useQuery({
+    queryKey: ["bitcoinPrices", start_date, end_date],
+    queryFn: () => fetchBitcoinPrices(start_date, end_date),
+  });
+};
+
+export const useLatestBitcoinPrice = () => {
+  return useQuery({
+    queryKey: ["latestBitcoinPrice"],
+    queryFn: fetchLatestBitcoinPrice,
+  });
+};
+
+export const useExchangeRates = (start_date: Date, end_date: Date) => {
+  return useQuery({
+    queryKey: ["exchangeRates", start_date, end_date],
+    queryFn: () => fetchExchangeRates(start_date, end_date),
+  });
+};
+
+export const useLatestExchangeRate = () => {
+  return useQuery({
+    queryKey: ["latestExchangeRate"],
+    queryFn: fetchLatestExchangeRate,
+  });
 };
 
 export const usePostAssetsPrices = () => {

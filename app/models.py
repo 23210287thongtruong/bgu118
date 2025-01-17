@@ -21,7 +21,7 @@ class AssetPrice(SQLModel, table=True):
         primary_key=True,
         default_factory=datetime.utcnow,
     )
-    exchange_rate_recorded_at: int = Field(
+    exchange_rate_recorded_at: datetime = Field(
         foreign_key="exchangerate.recorded_at", primary_key=True
     )
 
