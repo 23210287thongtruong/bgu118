@@ -17,11 +17,11 @@ async def create_exchange_rate(session: Session):
 
             # Ensure the date is in the correct format for SQLite DATETIME
             if len(date) == 10:  # If the date is in YYYY-MM-DD format
-                date += " 00:00:00"
+                date += "T00:00:00Z"
 
             # Convert the date string to a datetime object
-            recorded_at = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-            curr_exchange_rate = get_current_exchange_rate(session)
+            recorded_at = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+            curr_exchange_rate = get_latest_exchange_rate(session)
 
             if curr_exchange_rate and curr_exchange_rate.recorded_at == recorded_at:
                 return curr_exchange_rate
@@ -39,14 +39,22 @@ async def create_exchange_rate(session: Session):
             )
 
 
-def get_exchange_rates(session: Session):
+def get_exchange_rates(
+    session: Session, start_date: datetime = None, end_date: datetime = None
+):
     query = select(ExchangeRate)
+
+    if start_date:
+        query = query.where(ExchangeRate.recorded_at >= start_date)
+    if end_date:
+        query = query.where(ExchangeRate.recorded_at <= end_date)
+
     result = session.exec(query)
     exchange_rates = result.all()
     return exchange_rates
 
 
-def get_current_exchange_rate(session: Session) -> ExchangeRate:
+def get_latest_exchange_rate(session: Session) -> ExchangeRate:
     query = select(ExchangeRate).order_by(ExchangeRate.recorded_at.desc()).limit(1)
     result = session.exec(query)
     exchange_rate = result.first()
