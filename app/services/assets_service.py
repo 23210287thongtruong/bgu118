@@ -7,7 +7,7 @@ from config import (
 )
 from sqlmodel import Session, select
 from models import AssetPrice
-from services.exchange_rates_service import get_current_exchange_rate
+from services.exchange_rates_service import get_latest_exchange_rate
 
 
 async def create_gold_price(session: Session):
@@ -23,7 +23,7 @@ async def create_gold_price(session: Session):
             # Turn the value of timestamp to a datetime object
             price_recorded_at = datetime.fromtimestamp(timestamp)
 
-            prev_gold_price = get_first_asset_price(1, session)
+            prev_gold_price = get_latest_gold_price(session)
             if (
                 prev_gold_price
                 and prev_gold_price.price_recorded_at == timestamp
@@ -32,7 +32,7 @@ async def create_gold_price(session: Session):
                 return prev_gold_price
 
             else:
-                curr_exchange_rate = get_current_exchange_rate(session)
+                curr_exchange_rate = get_latest_exchange_rate(session)
                 if curr_exchange_rate is None:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
@@ -72,7 +72,7 @@ async def create_bitcoin_price(session: Session):
             price_recorded_at = datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
             price_recorded_at += timedelta(hours=7)
 
-            prev_bitcoin_price = get_first_asset_price(2, session)
+            prev_bitcoin_price = get_latest_bitcoin_price(session)
             if (
                 prev_bitcoin_price
                 and prev_bitcoin_price.price_recorded_at == last_updated
@@ -80,7 +80,7 @@ async def create_bitcoin_price(session: Session):
             ):
                 return prev_bitcoin_price
             else:
-                curr_exchange_rate = get_current_exchange_rate(session)
+                curr_exchange_rate = get_latest_exchange_rate(session)
 
                 if curr_exchange_rate is None:
                     raise HTTPException(
@@ -104,15 +104,53 @@ async def create_bitcoin_price(session: Session):
             )
 
 
-def get_asset_prices(asset_id: int, session: Session):
+def get_asset_prices(
+    asset_id: int,
+    session: Session,
+    start_date: datetime = None,
+    end_date: datetime = None,
+):
     query = select(AssetPrice).where(AssetPrice.asset_id == asset_id)
+    if start_date:
+        query = query.where(AssetPrice.price_recorded_at >= start_date)
+    if end_date:
+        query = query.where(AssetPrice.price_recorded_at <= end_date)
     result = session.exec(query)
     asset_prices = result.all()
     return asset_prices
 
 
-def get_first_asset_price(asset_id: int, session: Session):
-    query = select(AssetPrice).where(AssetPrice.asset_id == asset_id).limit(1)
+def get_gold_prices(
+    session: Session, start_date: datetime = None, end_date: datetime = None
+):
+    return get_asset_prices(1, session, start_date, end_date)
+
+
+def get_bitcoin_prices(
+    session: Session, start_date: datetime = None, end_date: datetime = None
+):
+    return get_asset_prices(2, session, start_date, end_date)
+
+
+def get_latest_gold_price(session: Session):
+    query = (
+        select(AssetPrice)
+        .where(AssetPrice.asset_id == 1)
+        .order_by(AssetPrice.price_recorded_at.desc())
+        .limit(1)
+    )
+    result = session.exec(query)
+    asset_price = result.first()
+    return asset_price
+
+
+def get_latest_bitcoin_price(session: Session):
+    query = (
+        select(AssetPrice)
+        .where(AssetPrice.asset_id == 2)
+        .order_by(AssetPrice.price_recorded_at.desc())
+        .limit(1)
+    )
     result = session.exec(query)
     asset_price = result.first()
     return asset_price
