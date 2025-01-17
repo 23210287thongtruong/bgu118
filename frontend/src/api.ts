@@ -102,7 +102,8 @@ export const usePostAssetsPrices = () => {
   return useMutation({
     mutationFn: postAssetsPrices,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["assetPrices"] });
+      queryClient.invalidateQueries({ queryKey: ["goldPrices"] });
+      queryClient.invalidateQueries({ queryKey: ["bitcoinPrices"] });
     },
   });
 };
